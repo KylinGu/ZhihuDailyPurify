@@ -35,7 +35,6 @@ public class MainActivity extends BaseActivity {
         MainPagerAdapter adapter = new MainPagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(adapter);
         tabs.setupWithViewPager(viewPager);
-
         FloatingActionButton floatingActionButton = (FloatingActionButton) findViewById(R.id.fab_pick_date);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override

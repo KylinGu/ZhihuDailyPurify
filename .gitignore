@@ -1,1 +1,8 @@
 ZhihuDailyAPI.md
+.gradle/
+.idea/
+ZhihuDailyPurify.iml
+app/app.iml
+app/build/
+build/
+local.properties
