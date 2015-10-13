@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.izzyleung.zhihudailypurify">
+    package="io.github.izzyleung.zhihudailypurify" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -10,30 +10,32 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.ZhihuDailyPurify.Light.NoActionBar">
+        android:theme="@style/Theme.ZhihuDailyPurify.Light.NoActionBar" >
 
         <activity
-            android:name=".ui.activity.MainActivity"
+            android:name=".ui.activity.SplashActivity"
             android:alwaysRetainTaskState="true"
-            android:label="@string/app_name">
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".ui.activity.MainActivity"
+            android:label="@string/app_name" >
+        </activity>
         <activity
             android:name=".ui.activity.PrefsActivity"
             android:label="@string/action_settings"
             android:theme="@style/Theme.ZhihuDailyPurify.Prefs" />
-
         <activity
             android:name=".ui.activity.PortalActivity"
             android:alwaysRetainTaskState="true" />
-
         <activity
             android:name=".ui.activity.SearchActivity"
             android:alwaysRetainTaskState="true" />
     </application>
+
 </manifest>

@@ -18,6 +18,7 @@ public final class Constants {
         public static final String ZHIHU_DAILY_OFFLINE_NEWS = "http://news-at.zhihu.com/api/3/news/";
         public static final String ZHIHU_DAILY_PURIFY_BEFORE = "http://zhihu-daily-purify.herokuapp.com/raw/";
         public static final String SEARCH = "http://zhihu-daily-purify.herokuapp.com/search/";
+        public static final String ZHIHU_DAILY_SPLASH_PIC = "http://news-at.zhihu.com/api/4/start-image/";
     }
 
     public static final class Date {

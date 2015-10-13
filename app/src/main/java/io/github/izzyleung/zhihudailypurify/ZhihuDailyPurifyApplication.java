@@ -36,7 +36,7 @@ public final class ZhihuDailyPurifyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         applicationContext = this;
-
+        //must be init before calling display image
         initImageLoader(getApplicationContext());
         dataSource = new DailyNewsDataSource(getApplicationContext());
         dataSource.open();

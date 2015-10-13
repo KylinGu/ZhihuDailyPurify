@@ -100,4 +100,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
     <string name="action_share_url">Share</string>
     <string name="share_to">Share to…</string>
     <string name="accelerate_server_unlock">Accelerate server unlocked</string>
+    <string name="title_activity_splash">SplashActivity</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>
