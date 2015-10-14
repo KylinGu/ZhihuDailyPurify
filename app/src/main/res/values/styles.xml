@@ -84,4 +84,16 @@
         <item name="android:layout_marginRight">@dimen/activity_horizontal_margin</item>
         <item name="android:src">@drawable/ic_action_go_to_date</item>
     </style>
+
+    <style name="BigTextSizeStyle">
+        <item name="android:textSize">@dimen/big_font_size</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MiddleTextSizeStyle">
+        <item name="android:textSize">@dimen/middle_font_size</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

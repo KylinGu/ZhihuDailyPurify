@@ -1,9 +1,10 @@
 package io.github.izzyleung.zhihudailypurify.ui.activity;
 
 import android.annotation.TargetApi;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,9 +24,15 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import io.github.izzyleung.zhihudailypurify.R;
 import io.github.izzyleung.zhihudailypurify.bean.SplashPicBean;
 import io.github.izzyleung.zhihudailypurify.task.GetSplashPicTask;
+import io.github.izzyleung.zhihudailypurify.task.OriginalGetNewsTask;
 
 public class SplashActivity extends BaseActivity implements GetSplashPicTask.UpdateUIListener{
 
@@ -34,11 +41,15 @@ public class SplashActivity extends BaseActivity implements GetSplashPicTask.Upd
     private static final String TAG = SplashActivity.class.getSimpleName();
     private static final int START_MAIN_EVENT = 100;
     private static final int START_TIMEOUT = 3000;
+    private static final String KEY_FIRST_LAUNCH = "First_Launch";
+    private static final String KEY_EXIST_SPLASH_PIC = "Exist_Splash_Pic";
+    private static final String KEY_EXIST_SPLASH_AUTHOR = "Exist_Splash_Author";
+
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private DisplayImageOptions options = new DisplayImageOptions.Builder()
-            .showImageOnLoading(R.drawable.default_splash)
-            .showImageOnFail(R.drawable.default_splash)
-            .showImageForEmptyUri(R.drawable.default_splash)
+            .showImageOnLoading(R.drawable.noimage)
+            .showImageOnFail(R.drawable.splash)
+            .showImageForEmptyUri(R.drawable.splash)
             .cacheInMemory(true)
             .cacheOnDisk(true)
             .considerExifParams(true)
@@ -74,11 +85,31 @@ public class SplashActivity extends BaseActivity implements GetSplashPicTask.Upd
                 onClickContainerView();
             }
         });
-        //get splash pic
-        new GetSplashPicTask(getResolution(), this).execute();
+
         ivSplash = (ImageView) findViewById(R.id.iv_splash);
         tv_author = (TextView) findViewById(R.id.tv_author);
+
+        SharedPreferences sp = getPreferences(MODE_PRIVATE);
+        if (!sp.getBoolean(KEY_FIRST_LAUNCH, false) && sp.getBoolean(KEY_EXIST_SPLASH_PIC, false)){
+            // use the old one and refresh the new one after zhihu news obtained completed
+            // After splash pic is refreshed, changed this key to be false.
+            tv_author.setText(sp.getString(KEY_EXIST_SPLASH_AUTHOR, getResources().getString(R.string.author)));
+            Bitmap bitmap = loadImage();
+            if (bitmap != null){
+                ivSplash.setImageBitmap(bitmap);
+            }
+        }else{
+            //use default splash pic, initial stage
+            //new GetSplashPicTask(getResolution(), this).execute();
+            sp.edit().putBoolean(KEY_FIRST_LAUNCH, false);
+            sp.edit().apply();
+            //TODO refresh news
+//            new OriginalGetNewsTask(date, NewsListFragment.).execute();
+        }
+        // need to check if splash has been updated based on the author obtained
+        new GetSplashPicTask(getResolution(), this).execute();
         handler.sendEmptyMessageDelayed(START_MAIN_EVENT, START_TIMEOUT);
+
     }
 
     private String getResolution() {
@@ -152,8 +183,23 @@ public class SplashActivity extends BaseActivity implements GetSplashPicTask.Upd
     @Override
     public void afterTaskFinished(SplashPicBean splashPicBean) {
         if (splashPicBean != null){
-            tv_author.setText(splashPicBean.getTitle());
-            imageLoader.displayImage(splashPicBean.getImage(), ivSplash, options, myImageLoadingListener);
+//            tv_author.setText(splashPicBean.getTitle());
+//            imageLoader.displayImage(splashPicBean.getImage(), ivSplash, options, myImageLoadingListener);
+//            Bitmap bitmap = imageLoader.loadImageSync(splashPicBean.getImage());
+            // do not load image and save image if current author has been saved.
+            // we can assume the current author would not be the same with the new one, so we can save mobile data.
+            if(getPreferences(MODE_PRIVATE).contains(KEY_EXIST_SPLASH_AUTHOR)){
+                String currentAuthor = getPreferences(MODE_PRIVATE).getString(KEY_EXIST_SPLASH_AUTHOR, getString(R.string.author));
+                if(currentAuthor != getString(R.string.author) && !currentAuthor.equals(splashPicBean.getTitle())){
+                    getPreferences(MODE_PRIVATE).edit().putString(KEY_EXIST_SPLASH_AUTHOR, splashPicBean.getTitle()).apply();
+                    imageLoader.loadImage(splashPicBean.getImage(), myImageLoadingListener);
+                }
+            }else{
+                getPreferences(MODE_PRIVATE).edit().putString(KEY_EXIST_SPLASH_AUTHOR, splashPicBean.getTitle()).apply();
+                imageLoader.loadImage(splashPicBean.getImage(), myImageLoadingListener);
+            }
+
+
         }
     }
 
@@ -175,6 +221,9 @@ public class SplashActivity extends BaseActivity implements GetSplashPicTask.Upd
         public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
             super.onLoadingComplete(imageUri, view, loadedImage);
             Log.d(TAG, "onLoadingComplete");
+            if (saveImage(loadedImage)){
+                getPreferences(MODE_PRIVATE).edit().putBoolean(KEY_EXIST_SPLASH_PIC, true).apply();
+            }
         }
 
         @Override
@@ -182,6 +231,32 @@ public class SplashActivity extends BaseActivity implements GetSplashPicTask.Upd
             super.onLoadingCancelled(imageUri, view);
             Log.d(TAG, "onLoadingCancelled");
         }
+    }
+
+    private Bitmap loadImage(){
+        Bitmap bitmap = null;
+        try {
+            FileInputStream fis = getApplicationContext().openFileInput("splash");
+            bitmap = BitmapFactory.decodeStream(fis);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return bitmap;
+    }
+
+    private boolean saveImage(Bitmap loadedImage){
+        boolean isSavedSuccess = false;
+        try {
+            FileOutputStream fos = getApplicationContext().openFileOutput("splash",MODE_PRIVATE);
+            isSavedSuccess = loadedImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return  isSavedSuccess;
     }
 
     @Override
